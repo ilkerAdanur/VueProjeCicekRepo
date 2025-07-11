@@ -8,7 +8,9 @@ onMounted(() => {
 })
 
 const loadCart = () => {
-  const savedCart = localStorage.getItem('flowerShopCart')
+  const user = JSON.parse(localStorage.getItem('user') || 'null')
+  const cartKey = user ? `flowerShopCart_${user.id}` : 'flowerShopCart'
+  const savedCart = localStorage.getItem(cartKey)
   if (savedCart) {
     cartItems.value = JSON.parse(savedCart)
   }
@@ -38,7 +40,9 @@ const clearCart = () => {
 }
 
 const saveCart = () => {
-  localStorage.setItem('flowerShopCart', JSON.stringify(cartItems.value))
+  const user = JSON.parse(localStorage.getItem('user') || 'null')
+  const cartKey = user ? `flowerShopCart_${user.id}` : 'flowerShopCart'
+  localStorage.setItem(cartKey, JSON.stringify(cartItems.value))
   window.dispatchEvent(new Event('cartUpdated'))
 }
 

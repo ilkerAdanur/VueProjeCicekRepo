@@ -33,6 +33,7 @@ namespace FlowerShop.API.Controllers
                     o.TotalAmount,
                     o.Status,
                     o.DeliveryDate,
+                    o.DeliveryTime,
                     Customer = new
                     {
                         o.Customer.FirstName,
@@ -67,6 +68,7 @@ namespace FlowerShop.API.Controllers
                     o.DeliveryCity,
                     o.DeliveryPostalCode,
                     o.DeliveryDate,
+                    o.DeliveryTime,
                     o.Notes,
                     Customer = new
                     {
@@ -144,6 +146,7 @@ namespace FlowerShop.API.Controllers
                     DeliveryCity = request.DeliveryCity,
                     DeliveryPostalCode = request.DeliveryPostalCode,
                     DeliveryDate = request.DeliveryDate,
+                    DeliveryTime = request.DeliveryTime,
                     Notes = request.Notes
                 };
 
@@ -215,6 +218,102 @@ namespace FlowerShop.API.Controllers
         {
             return _context.Orders.Any(e => e.Id == id);
         }
+
+        // GET: api/Orders/search?orderNumber=xxx&email=xxx
+        [HttpGet("search")]
+        public async Task<ActionResult<object>> SearchOrder(string orderNumber, string email)
+        {
+            if (string.IsNullOrEmpty(orderNumber) || string.IsNullOrEmpty(email))
+            {
+                return BadRequest(new { message = "Sipariş numarası ve e-posta adresi gereklidir." });
+            }
+
+            var order = await _context.Orders
+                .Include(o => o.Customer)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Flower)
+                .Where(o => o.OrderNumber == orderNumber && o.Customer.Email.ToLower() == email.ToLower())
+                .Select(o => new
+                {
+                    o.Id,
+                    o.OrderNumber,
+                    o.OrderDate,
+                    o.Status,
+                    o.TotalAmount,
+                    o.DeliveryAddress,
+                    o.DeliveryCity,
+                    o.DeliveryPostalCode,
+                    o.DeliveryDate,
+                    o.DeliveryTime,
+                    o.Notes,
+                    Customer = new
+                    {
+                        o.Customer.FirstName,
+                        o.Customer.LastName,
+                        o.Customer.Email,
+                        o.Customer.Phone
+                    },
+                    Items = o.OrderItems.Select(oi => new
+                    {
+                        oi.Id,
+                        oi.Quantity,
+                        oi.UnitPrice,
+                        FlowerName = oi.Flower.Name,
+                        FlowerImage = oi.Flower.ImageUrl,
+                        Total = oi.Quantity * oi.UnitPrice
+                    }).ToList()
+                })
+                .FirstOrDefaultAsync();
+
+            if (order == null)
+            {
+                return NotFound(new { message = "Belirtilen sipariş numarası ve e-posta ile eşleşen sipariş bulunamadı." });
+            }
+
+            return Ok(order);
+        }
+
+        // GET: api/Orders/customer/{email}
+        [HttpGet("customer/{email}")]
+        public async Task<ActionResult<IEnumerable<object>>> GetCustomerOrders(string email)
+        {
+            if (string.IsNullOrEmpty(email))
+            {
+                return BadRequest(new { message = "E-posta adresi gereklidir." });
+            }
+
+            var orders = await _context.Orders
+                .Include(o => o.Customer)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Flower)
+                .Where(o => o.Customer.Email.ToLower() == email.ToLower())
+                .OrderByDescending(o => o.OrderDate)
+                .Select(o => new
+                {
+                    o.Id,
+                    o.OrderNumber,
+                    o.OrderDate,
+                    o.Status,
+                    o.TotalAmount,
+                    o.DeliveryAddress,
+                    o.DeliveryCity,
+                    o.DeliveryDate,
+                    o.DeliveryTime,
+                    ItemCount = o.OrderItems.Count,
+                    Items = o.OrderItems.Select(oi => new
+                    {
+                        oi.Id,
+                        oi.Quantity,
+                        oi.UnitPrice,
+                        FlowerName = oi.Flower.Name,
+                        FlowerImage = oi.Flower.ImageUrl,
+                        Total = oi.Quantity * oi.UnitPrice
+                    }).ToList()
+                })
+                .ToListAsync();
+
+            return Ok(orders);
+        }
     }
 
     public class CreateOrderRequest
@@ -225,6 +324,7 @@ namespace FlowerShop.API.Controllers
         public string DeliveryCity { get; set; } = string.Empty;
         public string DeliveryPostalCode { get; set; } = string.Empty;
         public DateTime? DeliveryDate { get; set; }
+        public string DeliveryTime { get; set; } = string.Empty;
         public string Notes { get; set; } = string.Empty;
     }
 

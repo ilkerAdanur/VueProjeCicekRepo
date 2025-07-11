@@ -7,7 +7,9 @@ const router = useRouter()
 const cartItems = ref([])
 const loading = ref(false)
 const orderPlaced = ref(false)
-const orderId = ref(null)
+const orderNumber = ref(null)
+const showQuickRegister = ref(false)
+const quickEmail = ref('')
 
 // Form data
 const customerForm = ref({
@@ -20,30 +22,62 @@ const customerForm = ref({
   postalCode: ''
 })
 
+// Load saved customer info
+const loadCustomerInfo = () => {
+  const savedCustomer = localStorage.getItem('flowerShopCustomer')
+  if (savedCustomer) {
+    const customer = JSON.parse(savedCustomer)
+    customerForm.value = { ...customerForm.value, ...customer }
+  }
+}
+
+// Save customer info
+const saveCustomerInfo = () => {
+  localStorage.setItem('flowerShopCustomer', JSON.stringify(customerForm.value))
+}
+
+// Quick register with email only
+const quickRegister = () => {
+  if (quickEmail.value) {
+    customerForm.value.email = quickEmail.value
+    showQuickRegister.value = false
+    quickEmail.value = ''
+  }
+}
+
 const deliveryForm = ref({
   deliveryAddress: '',
   deliveryCity: '',
   deliveryPostalCode: '',
   deliveryDate: '',
+  deliveryTime: '',
   notes: ''
 })
 
 const sameAsCustomer = ref(true)
 
+// Computed property for minimum delivery date
+const minDeliveryDate = computed(() => {
+  const today = new Date()
+  return today.toISOString().split('T')[0]
+})
+
 onMounted(() => {
   loadCart()
+  loadCustomerInfo()
   if (cartItems.value.length === 0) {
     router.push('/cart')
   }
   
-  // Set minimum delivery date to tomorrow
-  const tomorrow = new Date()
-  tomorrow.setDate(tomorrow.getDate() + 1)
-  deliveryForm.value.deliveryDate = tomorrow.toISOString().split('T')[0]
+  // Set default delivery date to today
+  const today = new Date()
+  deliveryForm.value.deliveryDate = today.toISOString().split('T')[0]
 })
 
 const loadCart = () => {
-  const savedCart = localStorage.getItem('flowerShopCart')
+  const user = JSON.parse(localStorage.getItem('user') || 'null')
+  const cartKey = user ? `flowerShopCart_${user.id}` : 'flowerShopCart'
+  const savedCart = localStorage.getItem(cartKey)
   if (savedCart) {
     cartItems.value = JSON.parse(savedCart)
   }
@@ -83,15 +117,21 @@ const submitOrder = async () => {
       deliveryCity: sameAsCustomer.value ? customerForm.value.city : deliveryForm.value.deliveryCity,
       deliveryPostalCode: sameAsCustomer.value ? customerForm.value.postalCode : deliveryForm.value.deliveryPostalCode,
       deliveryDate: deliveryForm.value.deliveryDate ? new Date(deliveryForm.value.deliveryDate).toISOString() : null,
+      deliveryTime: deliveryForm.value.deliveryTime,
       notes: deliveryForm.value.notes
     }
     
     const response = await ordersApi.create(orderData)
-    orderId.value = response.data.id
+    orderNumber.value = response.data.orderNumber
     orderPlaced.value = true
-    
+
+    // Save customer info for future orders
+    saveCustomerInfo()
+
     // Clear cart
-    localStorage.removeItem('flowerShopCart')
+    const user = JSON.parse(localStorage.getItem('user') || 'null')
+    const cartKey = user ? `flowerShopCart_${user.id}` : 'flowerShopCart'
+    localStorage.removeItem(cartKey)
     window.dispatchEvent(new Event('cartUpdated'))
     
   } catch (error) {
@@ -109,7 +149,7 @@ const submitOrder = async () => {
     <div v-if="orderPlaced" class="text-center py-5">
       <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
       <h2 class="text-success mt-3">Siparişiniz Alındı!</h2>
-      <p class="lead">Sipariş numaranız: <strong>{{ orderId }}</strong></p>
+      <p class="lead">Sipariş numaranız: <strong>{{ orderNumber }}</strong></p>
       <p>Siparişiniz en kısa sürede hazırlanacak ve size ulaştırılacaktır.</p>
       <div class="mt-4">
         <router-link to="/" class="btn btn-success me-2">Ana Sayfaya Dön</router-link>
@@ -119,8 +159,18 @@ const submitOrder = async () => {
     
     <!-- Checkout Form -->
     <div v-else>
-      <h2 class="mb-4">Sipariş Tamamla</h2>
-      
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="mb-0">Sipariş Tamamla</h2>
+        <button
+          v-if="!customerForm.email"
+          type="button"
+          class="btn btn-outline-primary"
+          @click="showQuickRegister = true"
+        >
+          <i class="bi bi-lightning me-2"></i>Hızlı Kayıt
+        </button>
+      </div>
+
       <form @submit.prevent="submitOrder">
         <div class="row">
           <!-- Customer Information -->
@@ -197,7 +247,17 @@ const submitOrder = async () => {
                 <div class="row">
                   <div class="col-md-6 mb-3">
                     <label class="form-label">Teslimat Tarihi</label>
-                    <input v-model="deliveryForm.deliveryDate" type="date" class="form-control">
+                    <input v-model="deliveryForm.deliveryDate" type="date" class="form-control" :min="minDeliveryDate">
+                  </div>
+                  <div class="col-md-6 mb-3">
+                    <label class="form-label">Teslimat Saati</label>
+                    <select v-model="deliveryForm.deliveryTime" class="form-select">
+                      <option value="">Saat seçiniz</option>
+                      <option value="09:00-12:00">09:00 - 12:00</option>
+                      <option value="12:00-15:00">12:00 - 15:00</option>
+                      <option value="15:00-18:00">15:00 - 18:00</option>
+                      <option value="18:00-21:00">18:00 - 21:00</option>
+                    </select>
                   </div>
                   <div class="col-12 mb-3">
                     <label class="form-label">Notlar</label>
@@ -260,6 +320,46 @@ const submitOrder = async () => {
         </div>
       </form>
     </div>
+
+    <!-- Quick Register Modal -->
+    <div class="modal fade" :class="{ show: showQuickRegister }" :style="{ display: showQuickRegister ? 'block' : 'none' }" tabindex="-1">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">
+              <i class="bi bi-lightning me-2"></i>Hızlı Kayıt
+            </h5>
+            <button type="button" class="btn-close" @click="showQuickRegister = false"></button>
+          </div>
+          <div class="modal-body">
+            <p class="text-muted mb-3">
+              Sadece e-posta adresinizi girin, diğer bilgileri sipariş sırasında tamamlayabilirsiniz.
+            </p>
+            <form @submit.prevent="quickRegister">
+              <div class="mb-3">
+                <label class="form-label">E-posta Adresi</label>
+                <input
+                  v-model="quickEmail"
+                  type="email"
+                  class="form-control"
+                  placeholder="ornek@email.com"
+                  required
+                >
+              </div>
+              <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary flex-fill">
+                  <i class="bi bi-check me-2"></i>Devam Et
+                </button>
+                <button type="button" class="btn btn-outline-secondary" @click="showQuickRegister = false">
+                  İptal
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div v-if="showQuickRegister" class="modal-backdrop fade show"></div>
   </div>
 </template>
 
@@ -267,5 +367,9 @@ const submitOrder = async () => {
 .form-control:focus {
   border-color: #28a745;
   box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+.modal.show {
+  background-color: rgba(0,0,0,0.5);
 }
 </style>

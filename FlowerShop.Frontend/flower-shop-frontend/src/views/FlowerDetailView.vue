@@ -22,18 +22,20 @@ onMounted(async () => {
 })
 
 const addToCart = () => {
-  const cart = JSON.parse(localStorage.getItem('flowerShopCart') || '[]')
+  const user = JSON.parse(localStorage.getItem('user') || 'null')
+  const cartKey = user ? `flowerShopCart_${user.id}` : 'flowerShopCart'
+  const cart = JSON.parse(localStorage.getItem(cartKey) || '[]')
   const existingItem = cart.find(item => item.id === flower.value.id)
-  
+
   if (existingItem) {
     existingItem.quantity += quantity.value
   } else {
     cart.push({ ...flower.value, quantity: quantity.value })
   }
-  
-  localStorage.setItem('flowerShopCart', JSON.stringify(cart))
+
+  localStorage.setItem(cartKey, JSON.stringify(cart))
   window.dispatchEvent(new Event('cartUpdated'))
-  
+
   // Show success message or redirect to cart
   router.push('/cart')
 }
@@ -44,22 +46,44 @@ const goBack = () => {
 </script>
 
 <template>
-  <div class="container py-4">
-    <!-- Loading -->
-    <div v-if="loading" class="text-center py-5">
-      <div class="spinner-border text-success" role="status">
-        <span class="visually-hidden">Yükleniyor...</span>
+  <div class="flower-detail-view">
+    <!-- Compact Header -->
+    <div class="compact-header bg-primary text-white py-3">
+      <div class="container">
+        <div class="row align-items-center">
+          <div class="col-auto">
+            <button
+              class="btn btn-outline-light btn-sm"
+              @click="goBack"
+            >
+              <i class="bi bi-arrow-left me-1"></i>
+              Geri
+            </button>
+          </div>
+          <div class="col">
+            <div v-if="flower" class="d-flex align-items-center">
+              <i class="bi bi-flower1 me-3 fs-4"></i>
+              <div>
+                <h4 class="mb-0">{{ flower.name }}</h4>
+                <small class="opacity-75">{{ flower.categoryName }}</small>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-    
-    <!-- Flower Detail -->
-    <div v-else-if="flower" class="row">
-      <!-- Back Button -->
-      <div class="col-12 mb-3">
-        <button @click="goBack" class="btn btn-outline-secondary">
-          <i class="bi bi-arrow-left"></i> Geri Dön
-        </button>
+
+    <!-- Content -->
+    <div class="container py-4">
+      <!-- Loading -->
+      <div v-if="loading" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Yükleniyor...</span>
+        </div>
       </div>
+
+      <!-- Flower Detail -->
+      <div v-else-if="flower" class="row">
       
       <!-- Flower Image -->
       <div class="col-lg-6 mb-4">
@@ -125,21 +149,26 @@ const goBack = () => {
           </div>
         </div>
       </div>
-    </div>
-    
-    <!-- Error State -->
-    <div v-else class="text-center py-5">
-      <i class="bi bi-exclamation-triangle text-warning" style="font-size: 4rem;"></i>
-      <h4 class="text-muted mt-3">Ürün bulunamadı</h4>
-      <p class="text-muted">Aradığınız ürün mevcut değil veya kaldırılmış olabilir.</p>
-      <router-link to="/flowers" class="btn btn-success">
-        <i class="bi bi-flower1"></i> Çiçekleri Keşfet
-      </router-link>
+      </div>
+
+      <!-- Error State -->
+      <div v-else class="text-center py-5">
+        <i class="bi bi-exclamation-triangle text-warning" style="font-size: 4rem;"></i>
+        <h4 class="text-muted mt-3">Ürün bulunamadı</h4>
+        <p class="text-muted">Aradığınız ürün mevcut değil veya kaldırılmış olabilir.</p>
+        <router-link to="/flowers" class="btn btn-primary">
+          <i class="bi bi-flower1"></i> Çiçekleri Keşfet
+        </router-link>
+      </div>
     </div>
   </div>
 </template>
 
 <style scoped>
+.compact-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
 .input-group input[type="number"] {
   -moz-appearance: textfield;
 }

@@ -19,13 +19,15 @@ namespace FlowerShop.API.Controllers
         // GET: api/Flowers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<object>>> GetFlowers(
-            int? categoryId = null, 
-            string? search = null, 
-            int page = 1, 
+            int? categoryId = null,
+            int? occasionId = null,
+            string? search = null,
+            int page = 1,
             int pageSize = 12)
         {
             var query = _context.Flowers
                 .Include(f => f.Category)
+                .Include(f => f.Occasion)
                 .Where(f => f.IsActive);
 
             if (categoryId.HasValue)
@@ -33,9 +35,15 @@ namespace FlowerShop.API.Controllers
                 query = query.Where(f => f.CategoryId == categoryId.Value);
             }
 
+            if (occasionId.HasValue)
+            {
+                query = query.Where(f => f.OccasionId == occasionId.Value);
+            }
+
             if (!string.IsNullOrEmpty(search))
             {
-                query = query.Where(f => f.Name.Contains(search) || f.Description.Contains(search));
+                var searchLower = search.ToLower();
+                query = query.Where(f => f.Name.ToLower().Contains(searchLower) || f.Description.ToLower().Contains(searchLower));
             }
 
             var totalCount = await query.CountAsync();
@@ -52,7 +60,9 @@ namespace FlowerShop.API.Controllers
                     f.ImageUrl,
                     f.Stock,
                     f.CategoryId,
-                    CategoryName = f.Category.Name
+                    CategoryName = f.Category.Name,
+                    f.OccasionId,
+                    OccasionName = f.Occasion != null ? f.Occasion.Name : null
                 })
                 .ToListAsync();
 

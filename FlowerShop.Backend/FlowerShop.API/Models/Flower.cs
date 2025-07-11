@@ -30,11 +30,13 @@ namespace FlowerShop.API.Models
 
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
-        // Foreign Key
+        // Foreign Keys
         public int CategoryId { get; set; }
+        public int? OccasionId { get; set; } // Nullable - not all flowers need an occasion
 
-        // Navigation Property
+        // Navigation Properties
         public virtual Category Category { get; set; } = null!;
+        public virtual Occasion? Occasion { get; set; }
         public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
     }
 }

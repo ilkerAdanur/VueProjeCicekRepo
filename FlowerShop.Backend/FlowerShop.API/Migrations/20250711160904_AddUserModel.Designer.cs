@@ -3,6 +3,7 @@ using System;
 using FlowerShop.API.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace FlowerShop.API.Migrations
 {
     [DbContext(typeof(FlowerShopContext))]
-    partial class FlowerShopContextModelSnapshot : ModelSnapshot
+    [Migration("20250711160904_AddUserModel")]
+    partial class AddUserModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "9.0.7");
@@ -139,20 +142,6 @@ namespace FlowerShop.API.Migrations
                         .IsUnique();
 
                     b.ToTable("Customers");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Address = "",
-                            City = "",
-                            CreatedAt = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Email = "test@example.com",
-                            FirstName = "Test",
-                            LastName = "Customer",
-                            Phone = "555-0123",
-                            PostalCode = ""
-                        });
                 });
 
             modelBuilder.Entity("FlowerShop.API.Models.Flower", b =>
@@ -766,36 +755,6 @@ namespace FlowerShop.API.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Orders");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CustomerId = 1,
-                            DeliveryAddress = "123 Test Street",
-                            DeliveryCity = "Istanbul",
-                            DeliveryDate = new DateTime(2024, 1, 2, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DeliveryPostalCode = "34000",
-                            Notes = "Test sipariş",
-                            OrderDate = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            OrderNumber = "ORD-20250711-0001",
-                            Status = 0,
-                            TotalAmount = 150.00m
-                        },
-                        new
-                        {
-                            Id = 2,
-                            CustomerId = 1,
-                            DeliveryAddress = "456 Demo Avenue",
-                            DeliveryCity = "Ankara",
-                            DeliveryDate = new DateTime(2024, 1, 3, 0, 0, 0, 0, DateTimeKind.Utc),
-                            DeliveryPostalCode = "06000",
-                            Notes = "Demo sipariş",
-                            OrderDate = new DateTime(2024, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            OrderNumber = "ORD-20250711-0002",
-                            Status = 1,
-                            TotalAmount = 200.00m
-                        });
                 });
 
             modelBuilder.Entity("FlowerShop.API.Models.OrderItem", b =>
@@ -824,24 +783,6 @@ namespace FlowerShop.API.Migrations
                     b.HasIndex("OrderId");
 
                     b.ToTable("OrderItems");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            FlowerId = 1,
-                            OrderId = 1,
-                            Quantity = 2,
-                            UnitPrice = 75.00m
-                        },
-                        new
-                        {
-                            Id = 2,
-                            FlowerId = 2,
-                            OrderId = 2,
-                            Quantity = 1,
-                            UnitPrice = 200.00m
-                        });
                 });
 
             modelBuilder.Entity("FlowerShop.API.Models.User", b =>
@@ -908,7 +849,7 @@ namespace FlowerShop.API.Migrations
                             FirstName = "Admin",
                             IsActive = true,
                             LastName = "User",
-                            PasswordHash = "AEOEmypQRSZKzj5zc2bT4AQ9opGggat+5A6dcT+Kgtw=",
+                            PasswordHash = "jGl25bVBBBW96Qi9Te4V37Fnqchz/Eu4qB9vKrRIqRg=",
                             Role = "Admin",
                             Username = "admin"
                         },
@@ -920,7 +861,7 @@ namespace FlowerShop.API.Migrations
                             FirstName = "Demo",
                             IsActive = true,
                             LastName = "Customer",
-                            PasswordHash = "/+q6yUKvv+TaQyV1KgtAcpVA12kno4wKC2ushly3UCg=",
+                            PasswordHash = "XohImNooBHFR0OVvjcYpJ3NgPQ1qq73WKhHvch0VQtg=",
                             Role = "Customer",
                             Username = "demo"
                         });

@@ -12,7 +12,7 @@ namespace FlowerShop.API.Models
         [StringLength(20)]
         public string OrderNumber { get; set; } = string.Empty;
 
-        public DateTime OrderDate { get; set; } = DateTime.UtcNow;
+        public DateTime OrderDate { get; set; } = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, TimeZoneInfo.FindSystemTimeZoneById("Turkey Standard Time"));
 
         [Required]
         [Column(TypeName = "decimal(10,2)")]
@@ -31,6 +31,9 @@ namespace FlowerShop.API.Models
         public string DeliveryPostalCode { get; set; } = string.Empty;
 
         public DateTime? DeliveryDate { get; set; }
+
+        [StringLength(10)]
+        public string DeliveryTime { get; set; } = string.Empty;
 
         [StringLength(500)]
         public string Notes { get; set; } = string.Empty;
