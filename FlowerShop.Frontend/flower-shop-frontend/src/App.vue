@@ -257,7 +257,7 @@ export default {
     return {
       user: null,
       cartCount: 0,
-      darkMode: false
+      darkMode: true
     }
   },
   mounted() {

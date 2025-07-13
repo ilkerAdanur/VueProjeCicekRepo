@@ -4,13 +4,15 @@ import { categoriesApi } from '../services/api.js'
 
 const categories = ref([])
 const loading = ref(true)
+const error = ref(null)
 
 onMounted(async () => {
   try {
     const response = await categoriesApi.getAll()
     categories.value = response.data
-  } catch (error) {
-    console.error('Error loading categories:', error)
+  } catch (err) {
+    console.error('Error loading categories:', err)
+    error.value = 'Kategoriler yüklenirken bir hata oluştu.'
   } finally {
     loading.value = false
   }
@@ -29,7 +31,12 @@ onMounted(async () => {
             <span class="visually-hidden">Yükleniyor...</span>
           </div>
         </div>
-        
+
+        <!-- Error Message -->
+        <div v-else-if="error" class="alert alert-danger">
+          {{ error }}
+        </div>
+
         <!-- Categories Grid -->
         <div v-else class="row">
           <div v-for="category in categories" :key="category.id" class="col-lg-4 col-md-6 mb-4">
