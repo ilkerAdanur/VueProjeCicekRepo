@@ -260,7 +260,7 @@ export default {
       this.error = null
 
       try {
-        const response = await fetch(`http://localhost:5000/api/Orders/customer/${encodeURIComponent(this.userEmail)}`)
+        const response = await fetch(`http://localhost:5133/api/Orders/customer/${encodeURIComponent(this.userEmail)}`)
 
         if (response.ok) {
           this.orders = await response.json()
